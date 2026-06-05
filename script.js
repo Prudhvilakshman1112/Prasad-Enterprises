@@ -1,0 +1,467 @@
+/* ============================================
+   PRASAD ENTERPRISES – SAFETY NETS
+   Main JavaScript
+   ============================================ */
+
+'use strict';
+
+// ===== PRELOADER =====
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    const preloader = document.getElementById('preloader');
+    if (preloader) {
+      preloader.classList.add('hidden');
+      // Trigger hero animations after preloader
+      document.querySelectorAll('.animate-fadeup').forEach(el => {
+        el.style.animationPlayState = 'running';
+      });
+    }
+  }, 1900);
+});
+
+// ===== NAVBAR SCROLL =====
+const navbar = document.getElementById('navbar');
+let lastScrollY = 0;
+
+window.addEventListener('scroll', () => {
+  const scrollY = window.scrollY;
+  if (scrollY > 50) {
+    navbar.classList.add('scrolled');
+  } else {
+    navbar.classList.remove('scrolled');
+  }
+  lastScrollY = scrollY;
+  updateActiveNavLink();
+}, { passive: true });
+
+// ===== HAMBURGER MENU =====
+const hamburger = document.getElementById('hamburger-btn');
+const navLinks = document.getElementById('nav-links');
+
+hamburger.addEventListener('click', () => {
+  hamburger.classList.toggle('open');
+  navLinks.classList.toggle('open');
+  document.body.style.overflow = navLinks.classList.contains('open') ? 'hidden' : '';
+});
+
+// Close menu on link click
+document.querySelectorAll('.nav-link').forEach(link => {
+  link.addEventListener('click', () => {
+    hamburger.classList.remove('open');
+    navLinks.classList.remove('open');
+    document.body.style.overflow = '';
+  });
+});
+
+// Close menu on outside click
+document.addEventListener('click', (e) => {
+  if (navLinks.classList.contains('open') &&
+      !navLinks.contains(e.target) &&
+      !hamburger.contains(e.target)) {
+    hamburger.classList.remove('open');
+    navLinks.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+});
+
+// ===== ACTIVE NAV LINK ON SCROLL =====
+function updateActiveNavLink() {
+  const sections = document.querySelectorAll('section[id], header[id]');
+  const navLinkEls = document.querySelectorAll('.nav-link[href^="#"]');
+  let current = '';
+
+  sections.forEach(section => {
+    const sectionTop = section.offsetTop - 120;
+    if (window.scrollY >= sectionTop) {
+      current = '#' + section.getAttribute('id');
+    }
+  });
+
+  navLinkEls.forEach(link => {
+    link.classList.remove('active');
+    if (link.getAttribute('href') === current) {
+      link.classList.add('active');
+    }
+  });
+}
+
+// ===== SCROLL ANIMATIONS (AOS-like) =====
+function initScrollAnimations() {
+  const animElements = document.querySelectorAll('[data-aos]');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const delay = entry.target.dataset.aosDelay || 0;
+        setTimeout(() => {
+          entry.target.classList.add('aos-animate');
+        }, parseInt(delay));
+        observer.unobserve(entry.target);
+      }
+    });
+  }, {
+    threshold: 0.12,
+    rootMargin: '0px 0px -50px 0px'
+  });
+
+  animElements.forEach(el => observer.observe(el));
+}
+
+// ===== ANIMATED COUNTERS =====
+function animateCounters() {
+  const counters = document.querySelectorAll('.stat-number[data-count]');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        const target = parseInt(el.dataset.count);
+        const duration = 2000;
+        const step = target / (duration / 16);
+        let current = 0;
+
+        const timer = setInterval(() => {
+          current += step;
+          if (current >= target) {
+            current = target;
+            clearInterval(timer);
+          }
+          el.textContent = Math.floor(current);
+        }, 16);
+
+        observer.unobserve(el);
+      }
+    });
+  }, { threshold: 0.5 });
+
+  counters.forEach(counter => observer.observe(counter));
+}
+
+// ===== FLOATING PARTICLES =====
+function createParticles() {
+  const container = document.getElementById('particles');
+  if (!container) return;
+
+  const count = window.innerWidth < 768 ? 12 : 24;
+
+  for (let i = 0; i < count; i++) {
+    const particle = document.createElement('div');
+    particle.classList.add('particle');
+
+    const size = Math.random() * 6 + 2;
+    const left = Math.random() * 100;
+    const delay = Math.random() * 8;
+    const duration = Math.random() * 10 + 8;
+    const opacity = Math.random() * 0.5 + 0.2;
+
+    particle.style.cssText = `
+      width: ${size}px;
+      height: ${size}px;
+      left: ${left}%;
+      bottom: -10px;
+      opacity: ${opacity};
+      animation-delay: ${delay}s;
+      animation-duration: ${duration}s;
+    `;
+
+    container.appendChild(particle);
+  }
+}
+
+// ===== TESTIMONIALS SLIDER =====
+function initTestimonials() {
+  const track = document.getElementById('testimonials-track');
+  const prevBtn = document.getElementById('t-prev');
+  const nextBtn = document.getElementById('t-next');
+  const dotsContainer = document.getElementById('t-dots');
+
+  if (!track) return;
+
+  const cards = track.querySelectorAll('.testimonial-card');
+  const totalCards = cards.length;
+  let currentIndex = 0;
+  let autoplayTimer;
+
+  // Create dots
+  cards.forEach((_, i) => {
+    const dot = document.createElement('button');
+    dot.classList.add('t-dot');
+    dot.setAttribute('aria-label', `Testimonial ${i + 1}`);
+    if (i === 0) dot.classList.add('active');
+    dot.addEventListener('click', () => goTo(i));
+    dotsContainer.appendChild(dot);
+  });
+
+  function getVisibleCount() {
+    if (window.innerWidth < 768) return 1;
+    if (window.innerWidth < 1024) return 2;
+    return 3;
+  }
+
+  function getCardWidth() {
+    const card = cards[0];
+    const gap = 24;
+    return card.offsetWidth + gap;
+  }
+
+  function goTo(index) {
+    const visibleCount = getVisibleCount();
+    const maxIndex = Math.max(0, totalCards - visibleCount);
+    currentIndex = Math.max(0, Math.min(index, maxIndex));
+
+    const offset = currentIndex * getCardWidth();
+    track.style.transform = `translateX(-${offset}px)`;
+
+    // Update dots
+    dotsContainer.querySelectorAll('.t-dot').forEach((dot, i) => {
+      dot.classList.toggle('active', i === currentIndex);
+    });
+  }
+
+  function next() { goTo(currentIndex + 1); }
+  function prev() { goTo(currentIndex - 1); }
+
+  nextBtn.addEventListener('click', () => { next(); resetAutoplay(); });
+  prevBtn.addEventListener('click', () => { prev(); resetAutoplay(); });
+
+  function startAutoplay() {
+    autoplayTimer = setInterval(() => {
+      const visibleCount = getVisibleCount();
+      const maxIndex = Math.max(0, totalCards - visibleCount);
+      if (currentIndex >= maxIndex) {
+        goTo(0);
+      } else {
+        next();
+      }
+    }, 4000);
+  }
+
+  function resetAutoplay() {
+    clearInterval(autoplayTimer);
+    startAutoplay();
+  }
+
+  startAutoplay();
+
+  // Touch/swipe support
+  let touchStartX = 0;
+  track.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+  }, { passive: true });
+
+  track.addEventListener('touchend', e => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) next();
+      else prev();
+      resetAutoplay();
+    }
+  }, { passive: true });
+
+  window.addEventListener('resize', () => goTo(currentIndex));
+}
+
+// ===== CONTACT FORM → WHATSAPP =====
+function initContactForm() {
+  const form = document.getElementById('contact-form');
+  if (!form) return;
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    const name = document.getElementById('cf-name').value.trim();
+    const phone = document.getElementById('cf-phone').value.trim();
+    const service = document.getElementById('cf-service').value;
+    const address = document.getElementById('cf-address').value.trim();
+    const message = document.getElementById('cf-message').value.trim();
+
+    if (!name || !phone || !service) {
+      showFormNotification('Please fill in all required fields.', 'error');
+      return;
+    }
+
+    const waMessage = `Hello Prasad Enterprises! 👋
+
+*New Service Enquiry*
+━━━━━━━━━━━━━━━━━━━
+👤 *Name:* ${name}
+📞 *Phone:* ${phone}
+🔧 *Service:* ${service}
+📍 *Area:* ${address || 'Not specified'}
+💬 *Message:* ${message || 'Not specified'}
+━━━━━━━━━━━━━━━━━━━
+
+Please provide me with a quote and schedule a FREE site visit. Thank you!`;
+
+    const encodedMessage = encodeURIComponent(waMessage);
+    window.open(`https://wa.me/917799028484?text=${encodedMessage}`, '_blank');
+
+    showFormNotification('Redirecting to WhatsApp... 🎉', 'success');
+    form.reset();
+  });
+}
+
+function showFormNotification(msg, type) {
+  const existing = document.querySelector('.form-notification');
+  if (existing) existing.remove();
+
+  const notif = document.createElement('div');
+  notif.className = `form-notification ${type}`;
+  notif.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${msg}`;
+  notif.style.cssText = `
+    position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+    background: ${type === 'success' ? '#25d366' : '#e53935'};
+    color: white; font-family: 'Outfit', sans-serif; font-weight: 600;
+    padding: 14px 28px; border-radius: 100px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    z-index: 9998; display: flex; align-items: center; gap: 10px;
+    animation: fadeUp 0.4s ease forwards;
+    white-space: nowrap;
+  `;
+  document.body.appendChild(notif);
+
+  setTimeout(() => {
+    notif.style.opacity = '0';
+    notif.style.transition = 'opacity 0.4s ease';
+    setTimeout(() => notif.remove(), 400);
+  }, 4000);
+}
+
+// ===== SMOOTH SCROLL FOR ANCHOR LINKS =====
+function initSmoothScroll() {
+  document.querySelectorAll('a[href^="#"]').forEach(link => {
+    link.addEventListener('click', (e) => {
+      const href = link.getAttribute('href');
+      if (href === '#') return;
+
+      const target = document.querySelector(href);
+      if (target) {
+        e.preventDefault();
+        const offset = 80;
+        const top = target.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({ top, behavior: 'smooth' });
+      }
+    });
+  });
+}
+
+// ===== NAVBAR LOGO VISIBILITY =====
+function initNavLogo() {
+  // Show logo text if image fails silently
+  const logoImg = document.querySelector('.logo-img');
+  if (logoImg) {
+    logoImg.addEventListener('error', () => {
+      document.getElementById('logo-text-fallback').style.display = 'flex';
+    });
+  }
+}
+
+// ===== SERVICE CARD HOVER EFFECT =====
+function initServiceCards() {
+  const cards = document.querySelectorAll('.service-card:not(.cta-card)');
+  cards.forEach(card => {
+    card.addEventListener('mouseenter', () => {
+      cards.forEach(c => {
+        if (c !== card) c.style.opacity = '0.75';
+      });
+    });
+    card.addEventListener('mouseleave', () => {
+      cards.forEach(c => c.style.opacity = '1');
+    });
+  });
+}
+
+// ===== SAVE LOGO FROM USER PROVIDED IMAGE =====
+// The logo is served from images/logo.png (copy the user's logo manually)
+// If not found, fallback SVG is used in HTML
+
+// ===== SCROLL TO TOP ON LOGO CLICK =====
+function initLogoClick() {
+  const logoLink = document.getElementById('nav-logo-link');
+  if (logoLink) {
+    logoLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+}
+
+// ===== WHATSAPP FLOAT BUTTON SHOW/HIDE =====
+function initWAFloat() {
+  const waBtn = document.getElementById('whatsapp-float');
+  if (!waBtn) return;
+  // Always visible, but animate in after small delay
+  setTimeout(() => {
+    waBtn.style.opacity = '1';
+    waBtn.style.transform = 'scale(1)';
+  }, 2200);
+  waBtn.style.opacity = '0';
+  waBtn.style.transform = 'scale(0)';
+  waBtn.style.transition = 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+}
+
+// ===== PRICING CARD HOVER INTERACTIONS =====
+function initPricingCards() {
+  document.querySelectorAll('.pricing-card:not(.featured)').forEach(card => {
+    card.addEventListener('mouseenter', () => {
+      card.style.background = 'var(--off-white)';
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.background = '';
+    });
+  });
+}
+
+// ===== PARALLAX HERO BG =====
+function initParallax() {
+  const heroBg = document.querySelector('.hero-img');
+  if (!heroBg || window.innerWidth < 768) return;
+
+  window.addEventListener('scroll', () => {
+    const scrollY = window.scrollY;
+    if (scrollY < window.innerHeight) {
+      heroBg.style.transform = `scale(1.05) translateY(${scrollY * 0.15}px)`;
+    }
+  }, { passive: true });
+}
+
+// ===== KEYBOARD ACCESSIBILITY =====
+function initKeyboardNav() {
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && navLinks.classList.contains('open')) {
+      hamburger.classList.remove('open');
+      navLinks.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+  });
+}
+
+// ===== COPY LOGO IMAGE =====
+// Check if logo.png exists; handled by onerror fallbacks in HTML
+
+// ===== INIT ALL =====
+document.addEventListener('DOMContentLoaded', () => {
+  createParticles();
+  initScrollAnimations();
+  animateCounters();
+  initTestimonials();
+  initContactForm();
+  initSmoothScroll();
+  initNavLogo();
+  initServiceCards();
+  initLogoClick();
+  initWAFloat();
+  initPricingCards();
+  initParallax();
+  initKeyboardNav();
+
+  // Trigger initial active nav
+  updateActiveNavLink();
+});
+
+// ===== PERFORMANCE: Lazy image loading fallback =====
+if (!('IntersectionObserver' in window)) {
+  document.querySelectorAll('img[loading="lazy"]').forEach(img => {
+    img.removeAttribute('loading');
+  });
+}
