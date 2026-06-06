@@ -4,7 +4,7 @@
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 
-  <!-- Main Homepage -->
+  <!-- Main Homepage - Invisible Grills & Safety Nets Vizag -->
   <url>
     <loc>https://www.vizaginvisiblegrills.com/</loc>
     <lastmod>2026-06-06</lastmod>
@@ -12,69 +12,76 @@
     <priority>1.0</priority>
   </url>
 
-  <!-- Services -->
+  <!-- Our Services - Safety Nets, Balcony Nets, Bird Nets -->
   <url>
     <loc>https://www.vizaginvisiblegrills.com/#services</loc>
     <lastmod>2026-06-06</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.95</priority>
   </url>
 
-  <!-- Invisible Grills -->
+  <!-- Invisible Grills Vizag - SS316 Balcony & Window Grills -->
   <url>
     <loc>https://www.vizaginvisiblegrills.com/#invisible-grills</loc>
     <lastmod>2026-06-06</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.95</priority>
   </url>
 
-  <!-- Cloth Hangers -->
+  <!-- Cloth Hangers Vizag - Ceiling, Pulley, Wall Mounted -->
   <url>
     <loc>https://www.vizaginvisiblegrills.com/#cloth-hangers</loc>
     <lastmod>2026-06-06</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.90</priority>
   </url>
 
-  <!-- Live Gallery -->
+  <!-- Live Gallery - Installation Photos Visakhapatnam -->
   <url>
     <loc>https://www.vizaginvisiblegrills.com/#gallery</loc>
     <lastmod>2026-06-06</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.85</priority>
   </url>
 
-  <!-- Customer Reviews -->
+  <!-- Why Choose Us - 30 Year Warranty, Free Site Visit -->
+  <url>
+    <loc>https://www.vizaginvisiblegrills.com/#why-us</loc>
+    <lastmod>2026-06-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.80</priority>
+  </url>
+
+  <!-- Customer Reviews - Prasad Enterprises Vizag -->
   <url>
     <loc>https://www.vizaginvisiblegrills.com/#reviews</loc>
     <lastmod>2026-06-06</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <changefreq>weekly</changefreq>
+    <priority>0.80</priority>
   </url>
 
-
-  <!-- About -->
+  <!-- About Us - Prasad's Enterprises Visakhapatnam -->
   <url>
     <loc>https://www.vizaginvisiblegrills.com/#about</loc>
     <lastmod>2026-06-06</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.75</priority>
   </url>
 
-  <!-- Location / Map -->
+  <!-- Location - NTR Statue Sagar Nagar Endada Vizag -->
   <url>
     <loc>https://www.vizaginvisiblegrills.com/#location</loc>
     <lastmod>2026-06-06</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.85</priority>
   </url>
 
-  <!-- Contact -->
+  <!-- Contact Us - Call 7799028484 -->
   <url>
     <loc>https://www.vizaginvisiblegrills.com/#contact</loc>
     <lastmod>2026-06-06</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.85</priority>
   </url>
 
 </urlset>
