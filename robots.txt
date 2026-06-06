@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://www.vizaginvisiblegrills.com/sitemap.xml
+
+# Disallow admin or hidden paths (none currently)
+# Disallow: /admin/

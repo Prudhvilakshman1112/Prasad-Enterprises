@@ -168,25 +168,24 @@ function createParticles() {
   }
 }
 
-// ===== TESTIMONIALS SLIDER =====
-function initTestimonials() {
-  const track = document.getElementById('testimonials-track');
+// ===== REVIEWS SLIDER =====
+function initReviews() {
+  const track = document.getElementById('reviews-track');
   const prevBtn = document.getElementById('t-prev');
   const nextBtn = document.getElementById('t-next');
   const dotsContainer = document.getElementById('t-dots');
 
   if (!track) return;
 
-  const cards = track.querySelectorAll('.testimonial-card');
+  const cards = track.querySelectorAll('.review-card');
   const totalCards = cards.length;
   let currentIndex = 0;
-  let autoplayTimer;
 
   // Create dots
   cards.forEach((_, i) => {
     const dot = document.createElement('button');
     dot.classList.add('t-dot');
-    dot.setAttribute('aria-label', `Testimonial ${i + 1}`);
+    dot.setAttribute('aria-label', `Review ${i + 1}`);
     if (i === 0) dot.classList.add('active');
     dot.addEventListener('click', () => goTo(i));
     dotsContainer.appendChild(dot);
@@ -199,20 +198,13 @@ function initTestimonials() {
   }
 
   function getCardWidth() {
-    const card = cards[0];
-    const gap = 24;
-    return card.offsetWidth + gap;
+    return cards[0].offsetWidth + 24;
   }
 
   function goTo(index) {
-    const visibleCount = getVisibleCount();
-    const maxIndex = Math.max(0, totalCards - visibleCount);
+    const maxIndex = Math.max(0, totalCards - getVisibleCount());
     currentIndex = Math.max(0, Math.min(index, maxIndex));
-
-    const offset = currentIndex * getCardWidth();
-    track.style.transform = `translateX(-${offset}px)`;
-
-    // Update dots
+    track.style.transform = `translateX(-${currentIndex * getCardWidth()}px)`;
     dotsContainer.querySelectorAll('.t-dot').forEach((dot, i) => {
       dot.classList.toggle('active', i === currentIndex);
     });
@@ -221,44 +213,95 @@ function initTestimonials() {
   function next() { goTo(currentIndex + 1); }
   function prev() { goTo(currentIndex - 1); }
 
-  nextBtn.addEventListener('click', () => { next(); resetAutoplay(); });
-  prevBtn.addEventListener('click', () => { prev(); resetAutoplay(); });
-
-  function startAutoplay() {
-    autoplayTimer = setInterval(() => {
-      const visibleCount = getVisibleCount();
-      const maxIndex = Math.max(0, totalCards - visibleCount);
-      if (currentIndex >= maxIndex) {
-        goTo(0);
-      } else {
-        next();
-      }
-    }, 4000);
-  }
-
-  function resetAutoplay() {
-    clearInterval(autoplayTimer);
-    startAutoplay();
-  }
-
-  startAutoplay();
+  nextBtn.addEventListener('click', next);
+  prevBtn.addEventListener('click', prev);
 
   // Touch/swipe support
   let touchStartX = 0;
   track.addEventListener('touchstart', e => {
     touchStartX = e.touches[0].clientX;
   }, { passive: true });
-
   track.addEventListener('touchend', e => {
     const diff = touchStartX - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) next();
-      else prev();
-      resetAutoplay();
-    }
+    if (Math.abs(diff) > 50) { diff > 0 ? next() : prev(); }
   }, { passive: true });
 
   window.addEventListener('resize', () => goTo(currentIndex));
+}
+
+// ===== SERVICES SLIDER =====
+function initServicesSlider() {
+  const track = document.getElementById('services-track');
+  const prevBtn = document.getElementById('services-prev');
+  const nextBtn = document.getElementById('services-next');
+  const dotsContainer = document.getElementById('services-dots');
+
+  if (!track) return;
+
+  const cards = track.querySelectorAll('.service-card');
+  const total = cards.length;
+  let currentIndex = 0;
+  let isDragging = false, dragStartX = 0, dragScrollLeft = 0;
+
+  // Build dots
+  cards.forEach((_, i) => {
+    const dot = document.createElement('button');
+    dot.className = 'services-dot' + (i === 0 ? ' active' : '');
+    dot.setAttribute('aria-label', `Service ${i + 1}`);
+    dot.addEventListener('click', () => scrollToCard(i));
+    dotsContainer.appendChild(dot);
+  });
+
+  function updateDots(idx) {
+    dotsContainer.querySelectorAll('.services-dot').forEach((d, i) => {
+      d.classList.toggle('active', i === idx);
+    });
+  }
+
+  function scrollToCard(idx) {
+    if (idx < 0) idx = total - 1;
+    if (idx >= total) idx = 0;
+    currentIndex = idx;
+    const card = cards[currentIndex];
+    track.scrollTo({ left: card.offsetLeft - 4, behavior: 'smooth' });
+    updateDots(currentIndex);
+  }
+
+  if (prevBtn) prevBtn.addEventListener('click', () => scrollToCard(currentIndex - 1));
+  if (nextBtn) nextBtn.addEventListener('click', () => scrollToCard(currentIndex + 1));
+
+  // Mouse drag
+  track.addEventListener('mousedown', e => {
+    isDragging = true;
+    dragStartX = e.pageX - track.offsetLeft;
+    dragScrollLeft = track.scrollLeft;
+    track.style.cursor = 'grabbing';
+  });
+  track.addEventListener('mouseleave', () => { isDragging = false; track.style.cursor = 'grab'; });
+  track.addEventListener('mouseup', () => { isDragging = false; track.style.cursor = 'grab'; });
+  track.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    e.preventDefault();
+    track.scrollLeft = dragScrollLeft - (e.pageX - track.offsetLeft - dragStartX) * 1.5;
+  });
+
+  // Touch swipe
+  let touchStart = 0;
+  track.addEventListener('touchstart', e => { touchStart = e.touches[0].clientX; }, { passive: true });
+  track.addEventListener('touchend', e => {
+    const diff = touchStart - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) scrollToCard(diff > 0 ? currentIndex + 1 : currentIndex - 1);
+  }, { passive: true });
+
+  // Sync dot on manual scroll
+  track.addEventListener('scroll', () => {
+    const cardW = cards[0] ? cards[0].offsetWidth + 24 : 344;
+    const idx = Math.round(track.scrollLeft / cardW);
+    if (idx !== currentIndex) {
+      currentIndex = Math.min(Math.max(idx, 0), total - 1);
+      updateDots(currentIndex);
+    }
+  }, { passive: true });
 }
 
 // ===== CONTACT FORM → WHATSAPP =====
@@ -444,20 +487,100 @@ document.addEventListener('DOMContentLoaded', () => {
   createParticles();
   initScrollAnimations();
   animateCounters();
-  initTestimonials();
+  initReviews();
+  initServicesSlider();
+  initGallery();
   initContactForm();
   initSmoothScroll();
   initNavLogo();
   initServiceCards();
   initLogoClick();
   initWAFloat();
-  initPricingCards();
   initParallax();
   initKeyboardNav();
+  initGallery();
 
   // Trigger initial active nav
   updateActiveNavLink();
 });
+
+// ===== LIVE GALLERY =====
+function initGallery() {
+  const track = document.getElementById('gallery-track');
+  const prevBtn = document.getElementById('gallery-prev');
+  const nextBtn = document.getElementById('gallery-next');
+  const dotsContainer = document.getElementById('gallery-dots');
+
+  if (!track) return;
+
+  const slots = track.querySelectorAll('.gallery-slot');
+  const total = slots.length;
+  let currentIndex = 0;
+  let isDragging = false;
+  let dragStartX = 0;
+  let dragScrollLeft = 0;
+
+  // Build dot buttons
+  slots.forEach((_, i) => {
+    const dot = document.createElement('button');
+    dot.className = 'gallery-dot' + (i === 0 ? ' active' : '');
+    dot.setAttribute('aria-label', `Gallery image ${i + 1}`);
+    dot.addEventListener('click', () => scrollToSlot(i));
+    dotsContainer.appendChild(dot);
+  });
+
+  function updateDots(idx) {
+    dotsContainer.querySelectorAll('.gallery-dot').forEach((d, i) => {
+      d.classList.toggle('active', i === idx);
+    });
+  }
+
+  function scrollToSlot(idx) {
+    if (idx < 0) idx = total - 1;
+    if (idx >= total) idx = 0;
+    currentIndex = idx;
+    const slot = slots[currentIndex];
+    track.scrollTo({ left: slot.offsetLeft - 48, behavior: 'smooth' });
+    updateDots(currentIndex);
+  }
+
+  // Arrow buttons (no auto-reset)
+  if (prevBtn) prevBtn.addEventListener('click', () => scrollToSlot(currentIndex - 1));
+  if (nextBtn) nextBtn.addEventListener('click', () => scrollToSlot(currentIndex + 1));
+
+  // Mouse drag scroll
+  track.addEventListener('mousedown', e => {
+    isDragging = true;
+    dragStartX = e.pageX - track.offsetLeft;
+    dragScrollLeft = track.scrollLeft;
+    track.style.cursor = 'grabbing';
+  });
+  track.addEventListener('mouseleave', () => { isDragging = false; track.style.cursor = 'grab'; });
+  track.addEventListener('mouseup', () => { isDragging = false; track.style.cursor = 'grab'; });
+  track.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    e.preventDefault();
+    track.scrollLeft = dragScrollLeft - (e.pageX - track.offsetLeft - dragStartX) * 1.5;
+  });
+
+  // Touch swipe
+  let touchStart = 0;
+  track.addEventListener('touchstart', e => { touchStart = e.touches[0].clientX; }, { passive: true });
+  track.addEventListener('touchend', e => {
+    const diff = touchStart - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) scrollToSlot(diff > 0 ? currentIndex + 1 : currentIndex - 1);
+  }, { passive: true });
+
+  // Sync dot on manual scroll
+  track.addEventListener('scroll', () => {
+    const slotW = slots[0] ? slots[0].offsetWidth + 20 : 340;
+    const idx = Math.round(track.scrollLeft / slotW);
+    if (idx !== currentIndex) {
+      currentIndex = Math.min(Math.max(idx, 0), total - 1);
+      updateDots(currentIndex);
+    }
+  }, { passive: true });
+}
 
 // ===== PERFORMANCE: Lazy image loading fallback =====
 if (!('IntersectionObserver' in window)) {
