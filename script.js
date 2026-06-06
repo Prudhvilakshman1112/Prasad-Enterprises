@@ -588,3 +588,72 @@ if (!('IntersectionObserver' in window)) {
     img.removeAttribute('loading');
   });
 }
+
+// ===== GALLERY LIGHTBOX =====
+(function initLightbox() {
+  const overlay   = document.getElementById('gallery-lightbox');
+  const lightImg  = document.getElementById('lightbox-img');
+  const closeBtn  = document.getElementById('lightbox-close');
+  const prevBtn   = document.getElementById('lightbox-prev');
+  const nextBtn   = document.getElementById('lightbox-next');
+
+  if (!overlay || !lightImg) return;
+
+  // Collect all gallery images
+  const galleryImgs = Array.from(document.querySelectorAll('.gallery-img'));
+  let currentIndex = 0;
+
+  function openLightbox(index) {
+    currentIndex = index;
+    const img = galleryImgs[currentIndex];
+    lightImg.src = img.src;
+    lightImg.alt = img.alt;
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    updateArrows();
+  }
+
+  function closeLightbox() {
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+    lightImg.src = '';
+  }
+
+  function showPrev() {
+    if (currentIndex > 0) openLightbox(currentIndex - 1);
+  }
+
+  function showNext() {
+    if (currentIndex < galleryImgs.length - 1) openLightbox(currentIndex + 1);
+  }
+
+  function updateArrows() {
+    prevBtn.style.opacity = currentIndex === 0 ? '0.3' : '1';
+    prevBtn.style.pointerEvents = currentIndex === 0 ? 'none' : 'auto';
+    nextBtn.style.opacity = currentIndex === galleryImgs.length - 1 ? '0.3' : '1';
+    nextBtn.style.pointerEvents = currentIndex === galleryImgs.length - 1 ? 'none' : 'auto';
+  }
+
+  // Attach click to each gallery image
+  galleryImgs.forEach((img, i) => {
+    img.addEventListener('click', () => openLightbox(i));
+  });
+
+  // Controls
+  closeBtn.addEventListener('click', closeLightbox);
+  prevBtn.addEventListener('click', showPrev);
+  nextBtn.addEventListener('click', showNext);
+
+  // Click outside image to close
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeLightbox();
+  });
+
+  // Keyboard support
+  document.addEventListener('keydown', (e) => {
+    if (!overlay.classList.contains('active')) return;
+    if (e.key === 'Escape')      closeLightbox();
+    if (e.key === 'ArrowLeft')   showPrev();
+    if (e.key === 'ArrowRight')  showNext();
+  });
+})();
