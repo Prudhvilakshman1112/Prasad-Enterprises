@@ -602,6 +602,7 @@ if (!('IntersectionObserver' in window)) {
   // Collect all gallery images
   const galleryImgs = Array.from(document.querySelectorAll('.gallery-img'));
   let currentIndex = 0;
+  let pushedState  = false; // track whether we pushed a history state
 
   function openLightbox(index) {
     currentIndex = index;
@@ -611,12 +612,27 @@ if (!('IntersectionObserver' in window)) {
     overlay.classList.add('active');
     document.body.style.overflow = 'hidden';
     updateArrows();
+
+    // Push a fake history state so mobile back button triggers popstate
+    if (!pushedState) {
+      history.pushState({ lightbox: true }, '');
+      pushedState = true;
+    }
   }
 
-  function closeLightbox() {
+  function closeLightbox(fromPopstate) {
+    if (!overlay.classList.contains('active')) return;
     overlay.classList.remove('active');
     document.body.style.overflow = '';
     lightImg.src = '';
+
+    // If closed by button/tap/Escape (not by back button), clean up the history state
+    if (pushedState && !fromPopstate) {
+      pushedState = false;
+      history.back();
+    } else {
+      pushedState = false;
+    }
   }
 
   function showPrev() {
@@ -640,20 +656,28 @@ if (!('IntersectionObserver' in window)) {
   });
 
   // Controls
-  closeBtn.addEventListener('click', closeLightbox);
+  closeBtn.addEventListener('click', () => closeLightbox(false));
   prevBtn.addEventListener('click', showPrev);
   nextBtn.addEventListener('click', showNext);
 
   // Click outside image to close
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) closeLightbox();
+    if (e.target === overlay) closeLightbox(false);
   });
 
   // Keyboard support
   document.addEventListener('keydown', (e) => {
     if (!overlay.classList.contains('active')) return;
-    if (e.key === 'Escape')      closeLightbox();
-    if (e.key === 'ArrowLeft')   showPrev();
-    if (e.key === 'ArrowRight')  showNext();
+    if (e.key === 'Escape')     closeLightbox(false);
+    if (e.key === 'ArrowLeft')  showPrev();
+    if (e.key === 'ArrowRight') showNext();
+  });
+
+  // Mobile back button support via History API
+  window.addEventListener('popstate', (e) => {
+    if (overlay.classList.contains('active')) {
+      closeLightbox(true); // true = came from popstate, don't call history.back() again
+    }
   });
 })();
+
