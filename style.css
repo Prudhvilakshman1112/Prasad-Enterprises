@@ -1025,7 +1025,11 @@ ul { list-style: none; }
 @media (max-width: 480px) {
   .hero-title { font-size: 2.4rem; }
   .hero-btn { padding: 13px 22px; font-size: 0.9rem; }
-  .why-grid { grid-template-columns: 1fr; }
+  .why-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .why-card { padding: 20px 12px; }
+  .why-card h4 { font-size: 0.88rem; }
+  .why-card p { font-size: 0.78rem; line-height: 1.5; }
+  .why-icon-wrap { width: 46px; height: 46px; font-size: 1.2rem; margin-bottom: 10px; }
   .stat-item { padding: 0 10px; }
   .stat-number { font-size: 1.5rem; }
   .contact-form-wrap { padding: 24px; }
