@@ -65,7 +65,7 @@ ul { list-style: none; }
 .preloader-inner { text-align: center; }
 .preloader-logo { margin-bottom: 24px; }
 .preloader-logo img { width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; object-fit: cover; }
-.logo-svg-fallback { display: flex; justify-content: center; }
+.logo-svg-fallback { display: none; justify-content: center; }
 .preloader-bar {
   width: 200px; height: 4px;
   background: rgba(255,255,255,0.2);
