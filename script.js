@@ -41,7 +41,7 @@ const navLinks = document.getElementById('nav-links');
 hamburger.addEventListener('click', () => {
   hamburger.classList.toggle('open');
   navLinks.classList.toggle('open');
-  document.body.style.overflow = navLinks.classList.contains('open') ? 'hidden' : '';
+  document.documentElement.classList.toggle('nav-open', navLinks.classList.contains('open'));
 });
 
 // Close menu on link click
@@ -49,7 +49,7 @@ document.querySelectorAll('.nav-link').forEach(link => {
   link.addEventListener('click', () => {
     hamburger.classList.remove('open');
     navLinks.classList.remove('open');
-    document.body.style.overflow = '';
+    document.documentElement.classList.remove('nav-open');
   });
 });
 
@@ -60,7 +60,7 @@ document.addEventListener('click', (e) => {
       !hamburger.contains(e.target)) {
     hamburger.classList.remove('open');
     navLinks.classList.remove('open');
-    document.body.style.overflow = '';
+    document.documentElement.classList.remove('nav-open');
   }
 });
 
@@ -242,6 +242,8 @@ function initServicesSlider() {
   const total = cards.length;
   let currentIndex = 0;
   let isDragging = false, dragStartX = 0, dragScrollLeft = 0;
+  let isScrolling = false;   // ← lock to prevent scroll-event feedback loop
+  let scrollEndTimer = null;
 
   // Build dots
   cards.forEach((_, i) => {
@@ -263,44 +265,67 @@ function initServicesSlider() {
     if (idx >= total) idx = 0;
     currentIndex = idx;
     const card = cards[currentIndex];
+    // Set lock BEFORE scrollTo so the scroll listener ignores this movement
+    isScrolling = true;
+    clearTimeout(scrollEndTimer);
     track.scrollTo({ left: card.offsetLeft - 4, behavior: 'smooth' });
     updateDots(currentIndex);
+    // Release lock after animation completes (~600ms)
+    scrollEndTimer = setTimeout(() => { isScrolling = false; }, 700);
   }
 
   if (prevBtn) prevBtn.addEventListener('click', () => scrollToCard(currentIndex - 1));
   if (nextBtn) nextBtn.addEventListener('click', () => scrollToCard(currentIndex + 1));
 
-  // Mouse drag
+  // Mouse drag — only free-scrolls, snaps on mouseup
   track.addEventListener('mousedown', e => {
     isDragging = true;
     dragStartX = e.pageX - track.offsetLeft;
     dragScrollLeft = track.scrollLeft;
     track.style.cursor = 'grabbing';
   });
-  track.addEventListener('mouseleave', () => { isDragging = false; track.style.cursor = 'grab'; });
-  track.addEventListener('mouseup', () => { isDragging = false; track.style.cursor = 'grab'; });
+  track.addEventListener('mouseleave', () => {
+    if (isDragging) { isDragging = false; track.style.cursor = 'grab'; snapAfterDrag(); }
+  });
+  track.addEventListener('mouseup', () => {
+    if (isDragging) { isDragging = false; track.style.cursor = 'grab'; snapAfterDrag(); }
+  });
   track.addEventListener('mousemove', e => {
     if (!isDragging) return;
     e.preventDefault();
+    isScrolling = true;  // treat drag as programmatic to suppress dot flicker
+    clearTimeout(scrollEndTimer);
     track.scrollLeft = dragScrollLeft - (e.pageX - track.offsetLeft - dragStartX) * 1.5;
   });
 
+  function snapAfterDrag() {
+    const cardW = cards[0] ? cards[0].offsetWidth + 24 : 344;
+    const idx = Math.min(Math.max(Math.round(track.scrollLeft / cardW), 0), total - 1);
+    scrollToCard(idx);
+  }
+
   // Touch swipe
   let touchStart = 0;
-  track.addEventListener('touchstart', e => { touchStart = e.touches[0].clientX; }, { passive: true });
+  track.addEventListener('touchstart', e => {
+    touchStart = e.touches[0].clientX;
+  }, { passive: true });
   track.addEventListener('touchend', e => {
     const diff = touchStart - e.changedTouches[0].clientX;
     if (Math.abs(diff) > 40) scrollToCard(diff > 0 ? currentIndex + 1 : currentIndex - 1);
   }, { passive: true });
 
-  // Sync dot on manual scroll
+  // Sync dot on MANUAL (user-initiated) scroll only
   track.addEventListener('scroll', () => {
-    const cardW = cards[0] ? cards[0].offsetWidth + 24 : 344;
-    const idx = Math.round(track.scrollLeft / cardW);
-    if (idx !== currentIndex) {
-      currentIndex = Math.min(Math.max(idx, 0), total - 1);
-      updateDots(currentIndex);
-    }
+    if (isScrolling) return;  // ← ignore programmatic scrolls
+    clearTimeout(scrollEndTimer);
+    scrollEndTimer = setTimeout(() => {
+      const cardW = cards[0] ? cards[0].offsetWidth + 24 : 344;
+      const idx = Math.min(Math.max(Math.round(track.scrollLeft / cardW), 0), total - 1);
+      if (idx !== currentIndex) {
+        currentIndex = idx;
+        updateDots(currentIndex);
+      }
+    }, 150);
   }, { passive: true });
 }
 
@@ -474,7 +499,7 @@ function initKeyboardNav() {
     if (e.key === 'Escape' && navLinks.classList.contains('open')) {
       hamburger.classList.remove('open');
       navLinks.classList.remove('open');
-      document.body.style.overflow = '';
+      document.documentElement.classList.remove('nav-open');
     }
   });
 }
@@ -519,6 +544,8 @@ function initGallery() {
   let isDragging = false;
   let dragStartX = 0;
   let dragScrollLeft = 0;
+  let isScrolling = false;   // ← lock to prevent scroll-event feedback loop
+  let scrollEndTimer = null;
 
   // Build dot buttons
   slots.forEach((_, i) => {
@@ -540,11 +567,16 @@ function initGallery() {
     if (idx >= total) idx = 0;
     currentIndex = idx;
     const slot = slots[currentIndex];
+    // Set lock BEFORE scrollTo so the scroll listener ignores this movement
+    isScrolling = true;
+    clearTimeout(scrollEndTimer);
     track.scrollTo({ left: slot.offsetLeft - 48, behavior: 'smooth' });
     updateDots(currentIndex);
+    // Release lock after animation completes (~600ms)
+    scrollEndTimer = setTimeout(() => { isScrolling = false; }, 700);
   }
 
-  // Arrow buttons (no auto-reset)
+  // Arrow buttons
   if (prevBtn) prevBtn.addEventListener('click', () => scrollToSlot(currentIndex - 1));
   if (nextBtn) nextBtn.addEventListener('click', () => scrollToSlot(currentIndex + 1));
 
@@ -555,30 +587,48 @@ function initGallery() {
     dragScrollLeft = track.scrollLeft;
     track.style.cursor = 'grabbing';
   });
-  track.addEventListener('mouseleave', () => { isDragging = false; track.style.cursor = 'grab'; });
-  track.addEventListener('mouseup', () => { isDragging = false; track.style.cursor = 'grab'; });
+  track.addEventListener('mouseleave', () => {
+    if (isDragging) { isDragging = false; track.style.cursor = 'grab'; snapAfterDrag(); }
+  });
+  track.addEventListener('mouseup', () => {
+    if (isDragging) { isDragging = false; track.style.cursor = 'grab'; snapAfterDrag(); }
+  });
   track.addEventListener('mousemove', e => {
     if (!isDragging) return;
     e.preventDefault();
+    isScrolling = true;  // suppress dot flicker during drag
+    clearTimeout(scrollEndTimer);
     track.scrollLeft = dragScrollLeft - (e.pageX - track.offsetLeft - dragStartX) * 1.5;
   });
 
+  function snapAfterDrag() {
+    const slotW = slots[0] ? slots[0].offsetWidth + 20 : 340;
+    const idx = Math.min(Math.max(Math.round(track.scrollLeft / slotW), 0), total - 1);
+    scrollToSlot(idx);
+  }
+
   // Touch swipe
   let touchStart = 0;
-  track.addEventListener('touchstart', e => { touchStart = e.touches[0].clientX; }, { passive: true });
+  track.addEventListener('touchstart', e => {
+    touchStart = e.touches[0].clientX;
+  }, { passive: true });
   track.addEventListener('touchend', e => {
     const diff = touchStart - e.changedTouches[0].clientX;
     if (Math.abs(diff) > 40) scrollToSlot(diff > 0 ? currentIndex + 1 : currentIndex - 1);
   }, { passive: true });
 
-  // Sync dot on manual scroll
+  // Sync dot on MANUAL (user-initiated) scroll only
   track.addEventListener('scroll', () => {
-    const slotW = slots[0] ? slots[0].offsetWidth + 20 : 340;
-    const idx = Math.round(track.scrollLeft / slotW);
-    if (idx !== currentIndex) {
-      currentIndex = Math.min(Math.max(idx, 0), total - 1);
-      updateDots(currentIndex);
-    }
+    if (isScrolling) return;  // ← ignore programmatic scrolls
+    clearTimeout(scrollEndTimer);
+    scrollEndTimer = setTimeout(() => {
+      const slotW = slots[0] ? slots[0].offsetWidth + 20 : 340;
+      const idx = Math.min(Math.max(Math.round(track.scrollLeft / slotW), 0), total - 1);
+      if (idx !== currentIndex) {
+        currentIndex = idx;
+        updateDots(currentIndex);
+      }
+    }, 150);
   }, { passive: true });
 }
 
