@@ -304,14 +304,30 @@ function initServicesSlider() {
     scrollToCard(idx);
   }
 
-  // Touch swipe
+  // Touch swipe — use touchStartIndex to avoid race with scroll-snap updating currentIndex mid-gesture
   let touchStart = 0;
+  let touchStartIndex = 0;  // ← freeze index at moment finger touches down
   track.addEventListener('touchstart', e => {
     touchStart = e.touches[0].clientX;
+    touchStartIndex = currentIndex;   // capture BEFORE scroll-snap can change it
+    clearTimeout(scrollEndTimer);     // cancel any pending debounce so it can't race touchend
+    isScrolling = false;              // allow scroll events to be blocked cleanly
   }, { passive: true });
   track.addEventListener('touchend', e => {
     const diff = touchStart - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 40) scrollToCard(diff > 0 ? currentIndex + 1 : currentIndex - 1);
+    clearTimeout(scrollEndTimer);     // stop scroll debounce from firing after touchend
+    if (Math.abs(diff) > 40) {
+      // Always relative to where the finger started — never to a scroll-snap-modified currentIndex
+      scrollToCard(diff > 0 ? touchStartIndex + 1 : touchStartIndex - 1);
+    } else {
+      // Small swipe: let scroll-snap settle, then sync the dot
+      scrollEndTimer = setTimeout(() => {
+        const cardW = cards[0] ? cards[0].offsetWidth + 24 : 344;
+        const idx = Math.min(Math.max(Math.round(track.scrollLeft / cardW), 0), total - 1);
+        currentIndex = idx;
+        updateDots(currentIndex);
+      }, 300);
+    }
   }, { passive: true });
 
   // Sync dot on MANUAL (user-initiated) scroll only
@@ -607,14 +623,30 @@ function initGallery() {
     scrollToSlot(idx);
   }
 
-  // Touch swipe
+  // Touch swipe — use touchStartIndex to avoid race with scroll-snap updating currentIndex mid-gesture
   let touchStart = 0;
+  let touchStartIndex = 0;  // ← freeze index at moment finger touches down
   track.addEventListener('touchstart', e => {
     touchStart = e.touches[0].clientX;
+    touchStartIndex = currentIndex;   // capture BEFORE scroll-snap can change it
+    clearTimeout(scrollEndTimer);     // cancel any pending debounce so it can't race touchend
+    isScrolling = false;              // allow scroll events to be blocked cleanly
   }, { passive: true });
   track.addEventListener('touchend', e => {
     const diff = touchStart - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 40) scrollToSlot(diff > 0 ? currentIndex + 1 : currentIndex - 1);
+    clearTimeout(scrollEndTimer);     // stop scroll debounce from firing after touchend
+    if (Math.abs(diff) > 40) {
+      // Always relative to where the finger started — never to a scroll-snap-modified currentIndex
+      scrollToSlot(diff > 0 ? touchStartIndex + 1 : touchStartIndex - 1);
+    } else {
+      // Small swipe: let scroll-snap settle, then sync the dot
+      scrollEndTimer = setTimeout(() => {
+        const slotW = slots[0] ? slots[0].offsetWidth + 20 : 340;
+        const idx = Math.min(Math.max(Math.round(track.scrollLeft / slotW), 0), total - 1);
+        currentIndex = idx;
+        updateDots(currentIndex);
+      }, 300);
+    }
   }, { passive: true });
 
   // Sync dot on MANUAL (user-initiated) scroll only
