@@ -1,6 +1,0 @@
-# Render URL Rewrites — clean URLs for SEO subpages
-# 200 = rewrite (URL stays clean in browser), not a redirect
-
-/invisible-safety-grills    /invisible-safety-grills.html    200
-/balcony-safety-nets        /balcony-safety-nets.html        200
-/pulley-cloth-hangers       /pulley-cloth-hangers.html       200
